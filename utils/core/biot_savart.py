@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 MU_0 = 4 * np.pi * 1e-7  # Vacuum permeability (T·m/A)
 
+# Compute the magnetic field at a point in space due to a circular coil using the Biot-Savart law
 def biot_savart_loop(field_point, coil_center, coil_radius, coil_normal, current=1.0, num_segments=100):
     
     n = coil_normal / np.linalg.norm(coil_normal)
