@@ -6,6 +6,12 @@ from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 import matplotlib as mpl
 from ..core.em_functions import biot_savart_loop, compute_emf
+from ..core.localization_solver import (
+    generate_measured_emf,
+    localization_cost,
+    estimate_rx_pose,
+    compute_rmse,
+)
 
 class Arrow3D(FancyArrowPatch):
     def __init__(self, xs, ys, zs, *args, **kwargs):
@@ -154,9 +160,10 @@ class CatheterTrackingVisualizer:
             )
             self.ax.add_artist(arrow)
         
-        # Draw Rx coils (2 coils sharing an axis)
-        rx1_center = self.rx_center - 0.03 * self.rx_axis
-        rx2_center = self.rx_center + 0.03 * self.rx_axis
+        # Draw Rx coils (ground truth pose from sliders)
+        d = 0.06
+        rx1_center = self.rx_center - 0.5 * d * self.rx_axis
+        rx2_center = self.rx_center + 0.5 * d * self.rx_axis
         
         # Draw first Rx coil
         rx1_points = self.draw_coil(rx1_center, self.rx_axis, 'm', radius=0.01)
@@ -169,40 +176,89 @@ class CatheterTrackingVisualizer:
                     color='c', linewidth=2, label='Rx 2')
         
         # Draw line connecting Rx coils
-        self.ax.plot([rx1_center[0], rx2_center[0]],
-                    [rx1_center[1], rx2_center[1]],
-                    [rx1_center[2], rx2_center[2]], 'k--', alpha=0.5)
-        
-        # Calculate and display EMF for each Rx coil
-        emf_text = []
-        for i, rx_center in enumerate([rx1_center, rx2_center]):
-            # Calculate total magnetic field at Rx coil from all Tx coils
-            emf_text = []
-            emf_matrix = np.zeros((2, 3))
-            for i, rx_center in enumerate([rx1_center, rx2_center]):
-                for j, tx in enumerate(self.tx_coils):
-                    B = biot_savart_loop(
-                        rx_center, 
-                        tx['center'], 
-                        self.coil_radius, 
-                        tx['normal'], 
-                        self.current, 
-                        self.num_segments
-                    )
-                    emf = compute_emf(
-                        B, 
-                        self.rx_axis, 
-                        self.area, 
-                        self.num_turns, 
-                        self.frequency
-                    )
-                    emf_matrix[i, j] = emf
-                    emf_text.append(f'Rx {i+1} - Tx {j+1}: {emf:.2e} V')
-        
-        emf_vector = emf_matrix.flatten()
-        
-        # Update EMF text
-        self.emf_text.set_text('\n'.join(emf_text))
+        self.ax.plot(
+            [rx1_center[0], rx2_center[0]],
+            [rx1_center[1], rx2_center[1]],
+            [rx1_center[2], rx2_center[2]],
+            'k--',
+            alpha=0.5,
+        )
+        # Generate synthetic EMF measurements with noise
+        measured_emf = generate_measured_emf(
+            rx1_center,
+            rx2_center,
+            self.rx_axis,
+            self.tx_coils,
+            self.coil_radius,
+            self.num_segments,
+            self.current,
+            self.area,
+            self.num_turns,
+            self.frequency,
+            noise_std=1e-6,
+        )
+
+        # Estimate Rx pose from the noisy measurements
+        est_params = estimate_rx_pose(
+            measured_emf,
+            self.tx_coils,
+            self.coil_radius,
+            self.area,
+            self.num_turns,
+            self.frequency,
+            initial_guess=None,
+            d=d,
+        )
+
+        est_center = est_params[:3]
+        theta, phi = est_params[3], est_params[4]
+        est_axis = np.array(
+            [np.sin(phi) * np.cos(theta), np.sin(phi) * np.sin(theta), np.cos(phi)]
+        )
+        est_axis = est_axis / np.linalg.norm(est_axis)
+
+        est_rx1 = est_center - 0.5 * d * est_axis
+        est_rx2 = est_center + 0.5 * d * est_axis
+
+        est_rx1_points = self.draw_coil(est_rx1, est_axis, 'y', radius=0.01)
+        self.ax.plot(
+            est_rx1_points[:, 0],
+            est_rx1_points[:, 1],
+            est_rx1_points[:, 2],
+            color='y',
+            linestyle='--',
+            linewidth=2,
+            label='Est Rx 1',
+        )
+
+        est_rx2_points = self.draw_coil(est_rx2, est_axis, 'orange', radius=0.01)
+        self.ax.plot(
+            est_rx2_points[:, 0],
+            est_rx2_points[:, 1],
+            est_rx2_points[:, 2],
+            color='orange',
+            linestyle='--',
+            linewidth=2,
+            label='Est Rx 2',
+        )
+
+        # Line connecting estimated coils
+        self.ax.plot(
+            [est_rx1[0], est_rx2[0]],
+            [est_rx1[1], est_rx2[1]],
+            [est_rx1[2], est_rx2[2]],
+            color='orange',
+            linestyle='--',
+            alpha=0.5,
+        )
+
+        # Compute localization error
+        pos_rmse, ang_error = compute_rmse(self.rx_center, self.rx_axis, est_params)
+
+        # Update text with error metrics
+        self.emf_text.set_text(
+            f'Position RMSE: {pos_rmse:.2f} mm\nAngular Error: {ang_error:.1f} deg'
+        )
         
         # Set plot properties
         self.ax.set_xlabel('X (m)')
