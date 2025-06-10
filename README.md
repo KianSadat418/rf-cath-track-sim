@@ -68,14 +68,14 @@ ani_3d = animation.FuncAnimation(fig, animate_3d, frames=n_frames, init_func=ini
 Running this module requires `numpy` and `matplotlib`.
 
 ## Usage
-1. Install dependencies (Python ≥3.8, `numpy`, `matplotlib`).
-2. Execute the animation script:
+1. Install dependencies (Python ≥3.8, `numpy`, `matplotlib`, `tkinter`).
+2. Launch the Tkinter GUI application:
 
 ```bash
-python rf_catheter_sim/viz/animation_3D.py
+python main.py
 ```
 
-It will open a window showing the Rx coil trajectory and the instantaneous EMF values from three Tx coils.
+A window will open showing the RF catheter localization simulation with sliders for the Rx pose and real‑time error metrics.
 
 ## Status
 The project is in a very early state; many folders only contain stubs.  The provided code is primarily for demonstration and experimentation with simple electromagnetic calculations and visualization.
