@@ -3,7 +3,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
-
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
@@ -13,7 +12,6 @@ from ..core.localization_solver import (
     estimate_rx_pose,
     compute_rmse,
 )
-
 
 class Arrow3D(FancyArrowPatch):
     """Utility class for drawing arrows in 3D plots."""
@@ -27,7 +25,6 @@ class Arrow3D(FancyArrowPatch):
         xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, self.axes.M)
         self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
         return np.min(zs)
-
 
 class CatheterLocalizationApp:
     """Tkinter GUI application for RF catheter localization."""
@@ -66,7 +63,6 @@ class CatheterLocalizationApp:
         slider_frame.grid(row=0, column=1, sticky="n")
 
         slider_len = 300
-
         self.s_x = tk.Scale(slider_frame, from_=-0.2, to=0.2, resolution=0.01, length=slider_len, label="X", orient=tk.HORIZONTAL, command=self.on_slider)
         self.s_y = tk.Scale(slider_frame, from_=-0.2, to=0.2, resolution=0.01, length=slider_len, label="Y", orient=tk.HORIZONTAL, command=self.on_slider)
         self.s_z = tk.Scale(slider_frame, from_=-0.2, to=0.2, resolution=0.01, length=slider_len, label="Z", orient=tk.HORIZONTAL, command=self.on_slider)
@@ -85,7 +81,6 @@ class CatheterLocalizationApp:
         self.reset_btn = tk.Button(slider_frame, text="Reset", command=self.reset)
         self.reset_btn.grid(row=5, column=0, sticky="ew", pady=5)
 
-        # Frame with checkboxes to toggle EMF display
         emf_frame = tk.LabelFrame(self.master, text="Display EMF")
         emf_frame.grid(row=1, column=1, sticky="nw", pady=5)
 
@@ -110,7 +105,6 @@ class CatheterLocalizationApp:
         self.info_label.grid(row=6, column=0, columnspan=2)
 
     def on_slider(self, value):
-        # Schedule an update when sliders move
         self.master.after_idle(self.update_plot)
 
     def reset(self):
@@ -190,7 +184,6 @@ class CatheterLocalizationApp:
             noise_std=1e-6,
         )
 
-        # Update EMF labels according to checkboxes
         for idx, emf in enumerate(measured_emf):
             if self.emf_vars[idx].get():
                 self.emf_labels[idx].config(text=f"{emf:.2e} V")
@@ -236,12 +229,10 @@ class CatheterLocalizationApp:
         self.ax.set_title("RF Catheter Localization")
         self.canvas.draw_idle()
 
-
 def run_gui():
     root = tk.Tk()
     app = CatheterLocalizationApp(root)
     root.mainloop()
-
 
 if __name__ == "__main__":
     run_gui()
