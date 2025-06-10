@@ -7,6 +7,13 @@ import numpy as np
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 
+from ..core.em_functions import biot_savart_loop, compute_emf
+from ..core.localization_solver import (
+    generate_measured_emf,
+    estimate_rx_pose,
+    compute_rmse,
+)
+
 
 class Arrow3D(FancyArrowPatch):
     """Utility class for drawing arrows in 3D plots."""
@@ -20,13 +27,6 @@ class Arrow3D(FancyArrowPatch):
         xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, self.axes.M)
         self.set_positions((xs[0], ys[0]), (xs[1], ys[1]))
         return np.min(zs)
-
-from ..core.em_functions import biot_savart_loop, compute_emf
-from ..core.localization_solver import (
-    generate_measured_emf,
-    estimate_rx_pose,
-    compute_rmse,
-)
 
 
 class CatheterLocalizationApp:
@@ -67,21 +67,11 @@ class CatheterLocalizationApp:
 
         slider_len = 300
 
-        self.s_x = tk.Scale(slider_frame, from_=-0.2, to=0.2, resolution=0.01,
-                           length=slider_len, label="X", orient=tk.HORIZONTAL,
-                           command=self.on_slider)
-        self.s_y = tk.Scale(slider_frame, from_=-0.2, to=0.2, resolution=0.01,
-                           length=slider_len, label="Y", orient=tk.HORIZONTAL,
-                           command=self.on_slider)
-        self.s_z = tk.Scale(slider_frame, from_=-0.2, to=0.2, resolution=0.01,
-                           length=slider_len, label="Z", orient=tk.HORIZONTAL,
-                           command=self.on_slider)
-        self.s_theta = tk.Scale(slider_frame, from_=0, to=2*np.pi, resolution=0.05,
-                                length=slider_len, label="theta",
-                                orient=tk.HORIZONTAL, command=self.on_slider)
-        self.s_phi = tk.Scale(slider_frame, from_=0, to=np.pi, resolution=0.05,
-                              length=slider_len, label="phi",
-                              orient=tk.HORIZONTAL, command=self.on_slider)
+        self.s_x = tk.Scale(slider_frame, from_=-0.2, to=0.2, resolution=0.01, length=slider_len, label="X", orient=tk.HORIZONTAL, command=self.on_slider)
+        self.s_y = tk.Scale(slider_frame, from_=-0.2, to=0.2, resolution=0.01, length=slider_len, label="Y", orient=tk.HORIZONTAL, command=self.on_slider)
+        self.s_z = tk.Scale(slider_frame, from_=-0.2, to=0.2, resolution=0.01, length=slider_len, label="Z", orient=tk.HORIZONTAL, command=self.on_slider)
+        self.s_theta = tk.Scale(slider_frame, from_=0, to=2*np.pi, resolution=0.05, length=slider_len, label="theta", orient=tk.HORIZONTAL, command=self.on_slider)
+        self.s_phi = tk.Scale(slider_frame, from_=0, to=np.pi, resolution=0.05, length=slider_len, label="phi", orient=tk.HORIZONTAL, command=self.on_slider)
 
         self.s_x.set(self.rx_center[0])
         self.s_y.set(self.rx_center[1])
