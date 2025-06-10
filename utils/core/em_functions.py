@@ -44,3 +44,13 @@ def compute_emf(B_field, rx_axis, area, num_turns, frequency):
     B_parallel = np.dot(B_field, rx_axis)
     emf_peak = 2 * np.pi * frequency * num_turns * area * B_parallel
     return emf_peak
+
+# Generate a synthetic EMF matrix for testing purposes
+def generate_measured_emf(rx1_center, rx2_center, rx_axis, tx_coils, area, num_turns, freq, noise_std=1e-6):
+    emf_matrix = np.zeros((2, len(tx_coils)))
+    for i, rx_center in enumerate([rx1_center, rx2_center]):
+        for j, tx in enumerate(tx_coils):
+            B = biot_savart_loop(rx_center, tx['center'], 0.05, tx['normal'], 1.0, 50)
+            emf = compute_emf(B, rx_axis, area, num_turns, freq)
+            emf_matrix[i, j] = emf + np.random.normal(0, noise_std)
+    return emf_matrix.flatten()

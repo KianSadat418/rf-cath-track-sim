@@ -37,9 +37,9 @@ class CatheterTrackingVisualizer:
         
         # Tx coils configuration (3 coils evenly spaced along the ground, all facing upwards)
         self.tx_coils = [
-            {'center': np.array([-0.1, -0.05, 0]), 'normal': np.array([0, 0, 1]), 'color': 'r'},
-            {'center': np.array([0, 0.1, 0]), 'normal': np.array([0, 0, 1]), 'color': 'g'},
-            {'center': np.array([0.1, -0.05, 0]), 'normal': np.array([0, 0, 1]), 'color': 'b'}
+            {'center': np.array([-0.1, -0.05, -0.08]), 'normal': np.array([0, 0, 1]), 'color': 'r'},
+            {'center': np.array([0, 0.1, -0.08]), 'normal': np.array([0, 0, 1]), 'color': 'g'},
+            {'center': np.array([0.1, -0.05, -0.08]), 'normal': np.array([0, 0, 1]), 'color': 'b'}
         ]
         
         # Rx coils configuration (2 coils sharing an axis)
@@ -48,11 +48,11 @@ class CatheterTrackingVisualizer:
         self.rx_axis = self.rx_axis / np.linalg.norm(self.rx_axis)
         
         # Create sliders for Rx coil position and orientation (5 DOF)
-        self.ax_x = plt.axes([0.25, 0.20, 0.65, 0.03])
-        self.ax_y = plt.axes([0.25, 0.15, 0.65, 0.03])
-        self.ax_z = plt.axes([0.25, 0.10, 0.65, 0.03])
-        self.ax_theta = plt.axes([0.25, 0.05, 0.65, 0.03])
-        self.ax_phi = plt.axes([0.25, 0.00, 0.65, 0.03])
+        self.ax_x = plt.axes([0.25, 0.21, 0.65, 0.03])
+        self.ax_y = plt.axes([0.25, 0.16, 0.65, 0.03])
+        self.ax_z = plt.axes([0.25, 0.11, 0.65, 0.03])
+        self.ax_theta = plt.axes([0.25, 0.06, 0.65, 0.03])
+        self.ax_phi = plt.axes([0.25, 0.01, 0.65, 0.03])
         
         self.s_x = Slider(self.ax_x, 'X', -0.2, 0.2, valinit=self.rx_center[0])
         self.s_y = Slider(self.ax_y, 'Y', -0.2, 0.2, valinit=self.rx_center[1])
@@ -65,7 +65,7 @@ class CatheterTrackingVisualizer:
         self.reset_button = Button(reset_ax, 'Reset')
         
         # Text box for displaying EMF values
-        self.emf_text = self.fig.text(0.02, 0.9, '', fontsize=10, 
+        self.emf_text = self.fig.text(0.02, 0.82, '', fontsize=10, 
                                     bbox=dict(facecolor='white', alpha=0.7))
         
         # Initialize visualization
@@ -143,7 +143,7 @@ class CatheterTrackingVisualizer:
             points = self.draw_coil(coil['center'], coil['normal'], coil['color'])
             self.ax.plot(points[:, 0], points[:, 1], points[:, 2], 
                         color=coil['color'], linewidth=2, 
-                        label=f'Tx {i+1} ({chr(120+i)})')
+                        label=f'Tx {i+1}')
             
             # Draw normal vector
             arrow = Arrow3D(
@@ -177,27 +177,29 @@ class CatheterTrackingVisualizer:
         emf_text = []
         for i, rx_center in enumerate([rx1_center, rx2_center]):
             # Calculate total magnetic field at Rx coil from all Tx coils
-            B_total = np.zeros(3)
-            for tx in self.tx_coils:
-                B = biot_savart_loop(
-                    rx_center, 
-                    tx['center'], 
-                    self.coil_radius, 
-                    tx['normal'], 
-                    self.current, 
-                    self.num_segments
-                )
-                B_total += B
-            
-            # Calculate EMF
-            emf = compute_emf(
-                B_total, 
-                self.rx_axis, 
-                self.area, 
-                self.num_turns, 
-                self.frequency
-            )
-            emf_text.append(f'Rx {i+1} EMF: {emf:.2e} V')
+            emf_text = []
+            emf_matrix = np.zeros((2, 3))
+            for i, rx_center in enumerate([rx1_center, rx2_center]):
+                for j, tx in enumerate(self.tx_coils):
+                    B = biot_savart_loop(
+                        rx_center, 
+                        tx['center'], 
+                        self.coil_radius, 
+                        tx['normal'], 
+                        self.current, 
+                        self.num_segments
+                    )
+                    emf = compute_emf(
+                        B, 
+                        self.rx_axis, 
+                        self.area, 
+                        self.num_turns, 
+                        self.frequency
+                    )
+                    emf_matrix[i, j] = emf
+                    emf_text.append(f'Rx {i+1} - Tx {j+1}: {emf:.2e} V')
+        
+        emf_vector = emf_matrix.flatten()
         
         # Update EMF text
         self.emf_text.set_text('\n'.join(emf_text))
