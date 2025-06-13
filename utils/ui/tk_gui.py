@@ -34,12 +34,12 @@ class CatheterLocalizationApp:
         self.master.title("RF Catheter Localization")
 
         # Simulation parameters
-        self.coil_radius = 0.05
-        self.num_segments = 50
+        self.coil_radius = 0.0465
+        self.num_segments = 100
         self.current = 1.0
-        self.frequency = 10000
-        self.num_turns = 100
-        self.area = np.pi * (0.01) ** 2
+        self.frequency = 29220
+        self.num_turns = 300
+        self.area = np.pi * (0.00325) ** 2
 
         self.tx_coils = [
             {"center": np.array([-0.1, -0.05, -0.08]), "normal": np.array([0, 0, 1]), "color": "r"},
