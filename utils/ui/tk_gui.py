@@ -54,7 +54,7 @@ class CatheterLocalizationApp:
         self.update_plot()
 
     def _build_ui(self):
-        self.fig = plt.Figure(figsize=(6, 6))
+        self.fig = plt.Figure(figsize=(8, 8))
         self.ax = self.fig.add_subplot(111, projection="3d")
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
         self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=6)
@@ -219,13 +219,13 @@ class CatheterLocalizationApp:
         pos_rmse, ang_err = compute_rmse(self.rx_center, self.rx_axis, est_params)
         self.info_label.config(text=f"Position RMSE: {pos_rmse:.2f} mm  |  Angular Error: {ang_err:.1f} deg")
 
-        self.ax.set_xlim([-0.2, 0.2])
-        self.ax.set_ylim([-0.2, 0.2])
-        self.ax.set_zlim([-0.2, 0.2])
+        self.ax.set_xlim((-0.3, 0.3))
+        self.ax.set_ylim((-0.3, 0.3))
+        self.ax.set_zlim((-0.2, 0.2))
         self.ax.set_xlabel("X (m)")
         self.ax.set_ylabel("Y (m)")
         self.ax.set_zlabel("Z (m)")
-        self.ax.set_box_aspect([1,1,1])
+        self.ax.set_box_aspect([3,3,2])
         self.ax.set_title("RF Catheter Localization")
         self.canvas.draw_idle()
 
